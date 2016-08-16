@@ -45,6 +45,13 @@ def get_data(symbols, dates):
 	df = df.dropna(subset=["SPY"])
 	return df
 
+def compute_daily_returns(df):
+	'''Compute and Return the daily return values'''
+	# daily_return = (price[t] / price[t - 1]) - 1
+	return (df/df.shift(1)) - 1
+
+def compute_cumulative_returns(df):
+	return (df/df[0]) - 1
 
 def get_rolling_std(df, window=20):
 	return pd.Series.rolling(df, center=False, window=window).std()
@@ -57,6 +64,7 @@ def get_bollinger_bands(rm, rstd):
 	lower_band = rm - (rstd * 2)
 	return upper_band, lower_band
 
+
 def test_run():
 	start_date = '2016-01-01'
 	end_date = 	'2018-08-31'
@@ -65,11 +73,6 @@ def test_run():
 
 	# Read in more stocks
 	df = get_data(symbols, dates)
-	# print(df.ix[start_date:end_date, ['GOOG','IBM']])
-	# Compute global statistics for each stock
-	#print("\nMean:\n", df.mean())
-	#print("\nMedian:\n ", df.median())
-	#print("\nStd Dev:\n", df.std())
 
 	# plot_data(df,'Stock Prices','Dates','Price',False)
 	ax = df['SPY'].plot(title='SPY', label='SPY')
@@ -78,19 +81,19 @@ def test_run():
 	rm = get_rolling_mean(df['SPY'])
 	rstd = get_rolling_std(df['SPY'])
 	upper_band, lower_band = get_bollinger_bands(rm, rstd)
+	daily_returns = compute_daily_returns(df['SPY'])
 
 	upper_band = upper_band.rename(columns={'SPY':'SPY Upper STD'})
 	lower_band = lower_band.rename(columns={'SPY':'SPY Lower STD'})
 
-
-
-	# Add rolling mean to same plot
+	#  Add rolling mean to same plot
 	rm.plot(label='Rolling Mean ', ax=ax)
 	upper_band.plot(label='Upper Band', ax=ax)
 	lower_band.plot(label='Lower Band', ax=ax)
 	ax.legend(loc='upper left')
 	plt.show()
 
-
+	plot_data(compute_cumulative_returns(df['SPY']))
+	
 if __name__ == "__main__":
 	test_run()
