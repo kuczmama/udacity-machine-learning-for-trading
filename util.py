@@ -1,4 +1,3 @@
-''' Build a dataframe in pandas '''
 import pandas as pd 
 import os
 import matplotlib.pyplot as plt
@@ -16,10 +15,11 @@ def plot_data(df, title="Stock Prices", xlabel="Dates", ylabel="Price", normaliz
 	if normalize:
 		df = normalize_data(df)
 
+
 	ax = df.plot(title=title, fontsize=20)
 	ax.set_xlabel(xlabel)
 	ax.set_ylabel(ylabel)
-	plt.show()
+	#plt.show()
 
 
 def plot_selected(df, columns, start_index, end_index):
@@ -65,57 +65,9 @@ def get_bollinger_bands(rm, rstd):
 	lower_band = rm - (rstd * 2)
 	return upper_band, lower_band
 
-def get_all_data(symbol, dates):
-	df = get_data(symbol, dates)['VOO']
-	rm = get_rolling_mean(df)
-	rstd = get_rolling_std(df)
-	upper_band, lower_band = get_bollinger_bands(rm, rstd)
-
-	rm = rm.rename(columns={'VOO':'Rolling Mean'})
-	df = df.join(rm)
-	df = df.join(rstd)
-	df = df.join(upper_band)
-	df = df.join(lower_band)
-	plot_data(df)
-
 # If empty in the middle forward fill
 # If empty at the beginning backfill
 def fill_missing_values(df):
 	# Forward fill... Then back fill
 	df.fillna(method="ffill", inplace=True)
 	df.fillna(method="bfill", inplace=True)
-
-def test_run():
-	start_date = '2007-01-01'
-	end_date = 	'2013-08-31'
-	dates = pd.date_range(start_date, end_date)
-	# symbols = ['GOOG', 'IBM', 'GLD']
-	# #get_all_data(['VOO'], dates)
-
-	# # Read in more stocks
-	# df = get_data(symbols, dates)
-
-	# # plot_data(df,'Stock Prices','Dates','Price',False)
-	# ax = df['SPY'].plot(title='SPY', label='SPY')
-
-	# # Plot rolling mean
-	# rm = get_rolling_mean(df['SPY'])
-	# rstd = get_rolling_std(df['SPY'])
-	# upper_band, lower_band = get_bollinger_bands(rm, rstd)
-	# daily_returns = compute_daily_returns(df['SPY'])
-
-	# upper_band = upper_band.rename(columns={'SPY':'SPY Upper STD'})
-	# lower_band = lower_band.rename(columns={'SPY':'SPY Lower STD'})
-
-	# #  Add rolling mean to same plot
-	# rm.plot(label='Rolling Mean ', ax=ax)
-	# upper_band.plot(label='Upper Band', ax=ax)
-	# lower_band.plot(label='Lower Band', ax=ax)
-	# ax.legend(loc='upper left')
-	# plt.show()
-	plot_data(get_data(['FAKE1','FAKE2'],dates))
-	# plot_data(compute_cumulative_returns(df['SPY']))
-
-
-if __name__ == "__main__":
-	test_run()
