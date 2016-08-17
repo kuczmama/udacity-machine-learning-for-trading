@@ -9,33 +9,19 @@ def test_run():
 	start_date = '2007-01-01'
 	end_date = 	'2013-08-31'
 	dates = pd.date_range(start_date, end_date)
-	symbols = ['SPY']
+	symbols = ['SPY','XOM']
 
 	# Get data
 	df = util.get_data(symbols, dates)
-	util.plot_data(df, "SPY")
+	# util.plot_data(df, "SPY")
 
-	# plot daily returns
+	# Compute daily returns
 	daily_returns = util.compute_daily_returns(df)
-	util.plot_data(daily_returns, "Daily Returns")
+	# util.plot_data(daily_returns, title='Daily Returns', ylabel='Daily Returns')
 
-	# Plot histogram
-	daily_returns.hist(bins=20)
-
-	# Get Mean and Std Deviation
-	mean = daily_returns['SPY'].mean()
-	print("mean=", mean)
-	std = daily_returns['SPY'].std()
-
-	plt.axvline(mean, color='w', linestyle='dashed', linewidth=2)
-	plt.axvline(std, color='y', linestyle='dashed', linewidth=2)
-	plt.axvline(-std, color='y', linestyle='dashed', linewidth=2)
-	plt.axvline(2*std, color='y', linestyle='dashed', linewidth=2)
-	plt.axvline(-2*std, color='y', linestyle='dashed', linewidth=2)
-
-	# Compute curtosis
-	kurtosis = daily_returns.kurtosis()
-	print("kurtosis=", kurtosis)
+	daily_returns['SPY'].hist(bins=20, label='SPY')
+	daily_returns['XOM'].hist(bins=20, label='XOM')
+	plt.legend(loc='upper right')
 
 	plt.show()
 

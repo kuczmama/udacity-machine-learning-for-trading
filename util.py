@@ -1,6 +1,8 @@
 import pandas as pd 
 import os
 import matplotlib.pyplot as plt
+import numpy as np
+import math
 
 def symbol_to_path(symbol, base_dir="data"):
 	""" Return CSV file path given ticker symbol"""
@@ -46,7 +48,7 @@ def get_data(symbols, dates):
 	fill_missing_values(df)
 	return df
 
-def compute_daily_returns(df):
+def daily_returns(df):
 	'''Compute and Return the daily return values'''
 	# daily_return = (price[t] / price[t - 1]) - 1
 	return (df/df.shift(1)) - 1
@@ -71,3 +73,18 @@ def fill_missing_values(df):
 	# Forward fill... Then back fill
 	df.fillna(method="ffill", inplace=True)
 	df.fillna(method="bfill", inplace=True)
+
+def portfolio_daily_values(start_val, dates, symbols, allocs):
+	df = get_data(symbols, dates)
+	normed = normalize_data(df) # Normalize the data
+	alloced = normed * allocs # Multiply by the allocations so... Price of SPY * 0.4
+	pos_vals = alloced * start_val # Get the position_values in dollars
+	port_vals = pos_vals.sum(axis=1) # All the portfolio values summed together
+	return port_vals
+
+def sharpe_ratio(daily_returns):
+	''' S = mean(daily_returns - daily_risk_free_rate)  * sqrt(252)
+			-----------------------------------------
+			std(daily_returns)'''
+	# Assuming daily_risk_free_rate is 0
+	return daily_returns.mean() / daily_returns.std() * math.sqrt(252)
