@@ -43,6 +43,7 @@ def get_data(symbols, dates):
 		df = df.join(df_temp)
 
 	df = df.dropna(subset=["SPY"])
+	df = fill_nas(df)
 	return df
 
 def compute_daily_returns(df):
@@ -64,36 +65,56 @@ def get_bollinger_bands(rm, rstd):
 	lower_band = rm - (rstd * 2)
 	return upper_band, lower_band
 
+def get_all_data(symbol, dates):
+	df = get_data(symbol, dates)['VOO']
+	rm = get_rolling_mean(df)
+	rstd = get_rolling_std(df)
+	upper_band, lower_band = get_bollinger_bands(rm, rstd)
+
+	rm = rm.rename(columns={'VOO':'Rolling Mean'})
+	df = df.join(rm)
+	df = df.join(rstd)
+	df = df.join(upper_band)
+	df = df.join(lower_band)
+	plot_data(df)
+
+# If empty in the middle forward fill
+# If empty at the beginning backfill
+def fill_nas(df):
+	# Forward fill... Then back fill
+	return df.fillna(method="ffill").fillna(method="bfill")
 
 def test_run():
-	start_date = '2016-01-01'
-	end_date = 	'2018-08-31'
+	start_date = '2007-01-01'
+	end_date = 	'2013-08-31'
 	dates = pd.date_range(start_date, end_date)
-	symbols = ['GOOG', 'IBM', 'GLD']
+	# symbols = ['GOOG', 'IBM', 'GLD']
+	# #get_all_data(['VOO'], dates)
 
-	# Read in more stocks
-	df = get_data(symbols, dates)
+	# # Read in more stocks
+	# df = get_data(symbols, dates)
 
-	# plot_data(df,'Stock Prices','Dates','Price',False)
-	ax = df['SPY'].plot(title='SPY', label='SPY')
+	# # plot_data(df,'Stock Prices','Dates','Price',False)
+	# ax = df['SPY'].plot(title='SPY', label='SPY')
 
-	# Plot rolling mean
-	rm = get_rolling_mean(df['SPY'])
-	rstd = get_rolling_std(df['SPY'])
-	upper_band, lower_band = get_bollinger_bands(rm, rstd)
-	daily_returns = compute_daily_returns(df['SPY'])
+	# # Plot rolling mean
+	# rm = get_rolling_mean(df['SPY'])
+	# rstd = get_rolling_std(df['SPY'])
+	# upper_band, lower_band = get_bollinger_bands(rm, rstd)
+	# daily_returns = compute_daily_returns(df['SPY'])
 
-	upper_band = upper_band.rename(columns={'SPY':'SPY Upper STD'})
-	lower_band = lower_band.rename(columns={'SPY':'SPY Lower STD'})
+	# upper_band = upper_band.rename(columns={'SPY':'SPY Upper STD'})
+	# lower_band = lower_band.rename(columns={'SPY':'SPY Lower STD'})
 
-	#  Add rolling mean to same plot
-	rm.plot(label='Rolling Mean ', ax=ax)
-	upper_band.plot(label='Upper Band', ax=ax)
-	lower_band.plot(label='Lower Band', ax=ax)
-	ax.legend(loc='upper left')
-	plt.show()
+	# #  Add rolling mean to same plot
+	# rm.plot(label='Rolling Mean ', ax=ax)
+	# upper_band.plot(label='Upper Band', ax=ax)
+	# lower_band.plot(label='Lower Band', ax=ax)
+	# ax.legend(loc='upper left')
+	# plt.show()
+	plot_data(get_data(['FAKE1','FAKE2'],dates))
+	# plot_data(compute_cumulative_returns(df['SPY']))
 
-	plot_data(compute_cumulative_returns(df['SPY']))
-	
+
 if __name__ == "__main__":
 	test_run()
