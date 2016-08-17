@@ -18,7 +18,7 @@ def test_run():
 	port_vals = util.portfolio_daily_values(start_val, dates, symbols, allocs)
 	daily_returns = util.daily_returns(port_vals)
 	print('Average Daily Returns:=',daily_returns.mean())
-	print('Standard Daily Return:=',daily_returns.std())
+	print('Standard Daily Return or Risk:=',daily_returns.std())
 	print('Sharpe Ratio:=', util.sharpe_ratio(daily_returns))
 	daily_returns.plot()
 
