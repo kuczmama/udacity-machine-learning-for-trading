@@ -12,13 +12,13 @@ def normalize_data(df):
 	return df / df.ix[0, :]
 
 
-def plot_data(df, title="Stock Prices", xlabel="Dates", ylabel="Price", normalize=False):
+def plot_data(df, title="Stock Prices",label="", xlabel="Dates", ylabel="Price", normalize=False):
 	'''Plot Stock Prices'''
 	if normalize:
 		df = normalize_data(df)
 
 
-	ax = df.plot(title=title, fontsize=20)
+	ax = df.plot(title=title, fontsize=20, label=label)
 	ax.set_xlabel(xlabel)
 	ax.set_ylabel(ylabel)
 	#plt.show()
@@ -82,9 +82,12 @@ def portfolio_daily_values(start_val, dates, symbols, allocs):
 	port_vals = pos_vals.sum(axis=1) # All the portfolio values summed together
 	return port_vals
 
+# if sharpe_ratio > 1 : Good
+# 				  > 2 : Very Good
+#                 > 3 : Excellent
 def sharpe_ratio(daily_returns):
 	''' S = mean(daily_returns - daily_risk_free_rate)  * sqrt(252)
 			-----------------------------------------
 			std(daily_returns)'''
 	# Assuming daily_risk_free_rate is 0
-	return daily_returns.mean() / daily_returns.std() * math.sqrt(252)
+	return (daily_returns.mean() / daily_returns.std()) * math.sqrt(252)
