@@ -40,17 +40,18 @@ def negative_sharpe(allocs, data, start_val, dates, symbols):
 	Returns error as a single real value.
 	"""
 	result = util.sharpe_ratio(util.portfolio_daily_values(start_val, dates, symbols, allocs))
-	print('result: ', result)
+	#print('result: ', result)
 	return result
+	#return util.portfolio_daily_values(start_val, dates, symbols, allocs).mean()
 
 def test_run():
 	# Get initial data
-	start_date = '2010-08-31'
-	end_date = 	'2013-01-01'
+	start_date = '2004-08-31'
+	end_date = 	'2016-01-01'
 	dates = pd.date_range(start_date, end_date)
-	symbols = ['SPY','VOO']
-	original_allocation =  [0.5, 0.5]
-	start_val = 1000000 # one million dollars!!!
+	symbols = ['SPY','VOO','GLD','XOM','AAPL']
+	original_allocation =  [0.2, 0.2, 0.2, 0.2, 0.2]
+	start_val = 20000 # one million dollars!!!
 
 	# plot the original data
 	original_data = util.portfolio_daily_values(start_val, dates, symbols, original_allocation)
