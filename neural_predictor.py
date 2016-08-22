@@ -7,6 +7,7 @@ import pandas as pd
 learning_rate = 0.1
 start_date = '2010-08-31'
 end_date = 	'2013-01-01'
+dates = pd.date_range(start_date, end_date)
 
 """How data is stored
 	
@@ -19,36 +20,52 @@ end_date = 	'2013-01-01'
 
 	Weights:
 	[weight1, weight2, weight3... weight N]
+
+	Expected:
+	[expected1, expected2, expected3 ... expected N]
 """
 
-def create(dates, inputs):
-	inputs = pd.DataFrame(index=dates)
-	weights = pd.Series([0.0] * inputs.shape.x)
+def create_weights(inputs):
+	return pd.Series([0.0] * inputs.shape[1])
 
 def update_weight(weight, delta):
 	weight += delta
 
-def update_weights():
+def delta_weight(date, column, inputs, expected, weights):
 	# delta_weight = learning_rate(expected - actual) input_i
-	pass
+	expected = expected.ix[date][0]
+	return learning_rate * (expected - output(date, inputs, weights)) * inputs.ix[date][column]
 
-def output():
-	# for
-	pass
+def output(index, inputs, weights):
+	# sum(weights * inputs)
+	output = (inputs.ix[index] * weights).sum()
+	return output
+
+
+def train(inputs, weights, expected):
+	d_weight = 0.0
+	#iterate through each row
+	for index, row in inputs.iterrows():
+		# Iterate throught the columns
+		for column in range(row.shape[0]):
+			d_weight = delta_weight(index,column,inputs, expected, weights)
+			weights.ix[column] = (weights.ix[column] + d_weight)
 
 def test_run():
-	dates = pd.date_range(start_date, end_date)
+	num_inputs = 4
 	inputs = pd.DataFrame(index=dates)
-	num_inputs = 10
 
+	# Create random inputs
 	for x in range (num_inputs):
 		tmp = pd.DataFrame(data=np.random.rand(len(dates)), index=dates)
 		tmp = tmp.rename(columns={0: x})
 		inputs = inputs.join(tmp)
+	expected = pd.DataFrame(data=np.random.rand(len(dates)), index=dates)
 
-	
+	weights = create_weights(inputs) # start all weights at 0
+	train(inputs, weights, expected)
+	print(weights)
 
-	print(inputs)
 
 
 
