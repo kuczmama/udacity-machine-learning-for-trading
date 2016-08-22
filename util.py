@@ -1,6 +1,6 @@
 import pandas as pd 
 import os
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import math
 
@@ -43,15 +43,20 @@ def get_data(symbols, dates):
 		)
 		df_temp = df_temp.rename(columns={'Adj Close': symbol})
 		df = df.join(df_temp)
+		
 
-	df = df.dropna(subset=["SPY"])
-	fill_missing_values(df)
+	#df = df.dropna(subset=["SPY"])
+	#fill_missing_values(df)
 	return df
 
 def daily_returns(df):
 	'''Compute and Return the daily return values'''
 	# daily_return = (price[t] / price[t - 1]) - 1
 	return (df/df.shift(1)) - 1
+
+def up_or_down(df):
+	returns = (df/df.shift(1))  - 1
+	print(returns)
 
 def compute_cumulative_returns(df):
 	return (df/df[0]) - 1
