@@ -27,7 +27,7 @@ def plot_data(df, title="Stock Prices",label="", xlabel="Dates", ylabel="Price",
 def plot_selected(df, columns, start_index, end_index):
 	plot_data(df[start_index:end_index, columns])
 
-def get_data(symbols, dates):
+def get_data(symbols, dates, drop_na=True):
 	df = pd.DataFrame(index=dates)
 	if 'SPY' not in symbols:
 		symbols.insert(0, 'SPY')
@@ -44,9 +44,9 @@ def get_data(symbols, dates):
 		df_temp = df_temp.rename(columns={'Adj Close': symbol})
 		df = df.join(df_temp)
 		
-
-	#df = df.dropna(subset=["SPY"])
-	#fill_missing_values(df)
+	if drop_na:
+		df = df.dropna(subset=["SPY"])
+		fill_missing_values(df)
 	return df
 
 def daily_returns(df):
