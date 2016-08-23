@@ -58,11 +58,35 @@ def get_expected(dates):
 	expected = expected.rename(columns={'SPY': 'Expected'})
 	return expected
 
+def download_indices_csv(dates, path, fname, cols, index_col="DATE"):
+	df = pd.DataFrame(index=dates)
+	df = pd.read_csv(
+			os.path.join(path, fname),
+			index_col=index_col,
+			parse_dates=True,
+			usecols=cols,
+			na_values=['nan'],
+			engine='python'
+		)
+	df = df.applymap(lambda x: np.nan if (x == '.') else x) # Set . as NaN
+	df = df.applymap(lambda x: float(x)) # convert strings to floats
+	df = df.bfill()
+	return df	
+
+# BofA Merrill Lynch US High Yield Option-Adjusted Spread©
+def input_boa_high_yield_options(dates):
+	return download_indices_csv(dates, "data/indices", "BAMLH0A0HYM2.csv", ["DATE", "BAMLH0A0HYM2"])
+	
+
+def input_ten_year_treasury_bond(dates):
+	return download_indices_csv(dates, "data/indices", "DGS10.csv", ["DATE", "DGS10"])
+
+
 # Get the U.S Dollar / Euro
 def input_dollar_over_euro(dates):
 	df = pd.DataFrame(index=dates)
 	df = pd.read_csv(
-			os.path.join("data", "DEXUSEU.csv"),
+			os.path.join("data/indices", "DEXUSEU.csv"),
 			index_col="DATE",
 			parse_dates=True,
 			usecols=["DATE", "DEXUSEU"],
@@ -88,7 +112,7 @@ def input_distance_from_upper_and_lower_bollinger_band(df):
 def test_results(weights):
 	print("Testing with weights...\n")
 	start_date = '2014-01-02'
-	end_date = '2016-08-01'
+	end_date = '2016-08-31'
 	dates = pd.date_range(start_date, end_date)
 	spy = util.get_data(['SPY'], dates)
 	normed_spy = util.normalize_data(spy)
@@ -114,21 +138,29 @@ def create_inputs(dates, training=True):
 	input_distance_from_upper, input_distance_from_lower = input_distance_from_upper_and_lower_bollinger_band(normed_spy)
 
 	dollar_over_euro = input_dollar_over_euro(dates) # dollar / euro
+	ten_year_treasury_bond = input_ten_year_treasury_bond(dates)
+	boa_high_yield_options = input_boa_high_yield_options(dates)
 
 	if training:
 		input_distance_from_upper.shift(1)
 		input_distance_from_lower.shift(1)
 		dollar_over_euro.shift(1)
+		ten_year_treasury_bond.shift(1)
+		boa_high_yield_options.shift(1)
 
 	inputs = inputs.join(input_distance_from_upper)
 	inputs = inputs.join(input_distance_from_lower)
 	inputs = inputs.join(dollar_over_euro)
+	inputs = inputs.join(ten_year_treasury_bond)
+	inputs = inputs.join(boa_high_yield_options)
 
 	# Join inputs together
 	inputs = inputs.dropna(subset=["SPY"])
 	inputs = inputs.dropna(subset=["Distance From Upper"])
 	inputs = inputs.dropna(subset=["Distance From Lower"])
 	inputs = inputs.dropna(subset=["DEXUSEU"])
+	inputs = inputs.dropna(subset=["DGS10"])
+	inputs = inputs.dropna(subset=["BAMLH0A0HYM2"])
 	inputs = inputs.ix[:,1:]
 	return inputs
 
