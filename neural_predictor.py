@@ -101,7 +101,7 @@ def test_results(weights):
 
 	print("Correct count: {}, Total: {}, Percent Correct: {}".format(correct_count, str(test_inputs.shape[0]), str((correct_count/test_inputs.shape[0])*100) ))
 		#rolling_mean_over_std = rolling_over_std.ix[date][0]
-	
+
 
 def create_inputs(dates, training=True):
 	inputs = pd.DataFrame(index=dates)
@@ -138,9 +138,7 @@ def create_inputs(dates, training=True):
 		# ten_year_treasury_bond.shift(1)
 		# boa_high_yield_options.shift(1)
 
-
 	return inputs
-
 
 def test_run():
 	start_date = '1993-08-31'
