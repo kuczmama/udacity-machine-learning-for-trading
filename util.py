@@ -71,6 +71,11 @@ def get_bollinger_bands(rm, rstd):
 	upper_band = rm + (rstd * 2)
 	lower_band = rm - (rstd * 2)
 	return upper_band, lower_band
+	
+def bollinger_bands(df):
+	rm = get_rolling_mean(df)
+	rstd = get_rolling_std(df)
+	return get_bollinger_bands(rm, rstd)
 
 # If empty in the middle forward fill
 # If empty at the beginning backfill

@@ -3,7 +3,7 @@ import numpy as np
 import util
 import pandas as pd 
 
-learning_rate = 0.01
+learning_rate = 0.0001
 
 
 """How data is stored
@@ -29,20 +29,19 @@ def update_weight(weight, delta):
 	weight += delta
 
 def delta_weight(date, column, inputs, expected, weights):
-	#print(expected.ix[date])
 	# delta_weight = learning_rate(expected - actual) input_i
 	expected = expected.ix[date][0]
-	#@print(expected[date])
 	return learning_rate * (expected - output(date, inputs, weights)) * inputs.ix[date][column]
-	#return 0
 
 def output(index, inputs, weights):
-	# sum(weights * inputs)
-	output = (inputs.ix[index] * weights).sum()
-	return output
+	#print(inputs.ix[index][2])
+	output = inputs.ix[index].multiply(weights.as_matrix()).sum()
+	output = 0
+	return 1.0 if output >= 0.0 else 0.0
 
 
 def train(inputs, weights, expected):
+	print("Training...\n")
 	d_weight = 0.0
 	#iterate through each row
 	for index, row in inputs.iterrows():
@@ -57,60 +56,107 @@ def get_expected(dates):
 	expected = util.daily_returns(expected)
 	expected = expected.applymap(lambda x: 1.0 if x > 0 else 0.0)
 	expected = expected.rename(columns={'SPY': 'Expected'})
-	#print(expected)
 	return expected
-	
-def get_rolling_over_std(df):
-		# number of std deviations away from rolling mean
-	rolling_over_std = util.get_rolling_mean(df)/util.get_rolling_std(df) 
-	rolling_over_std = rolling_over_std.shift(1)
-	rolling_over_std = rolling_over_std.rename(columns={'SPY': 'Num STDS'})
-	return rolling_over_std
+
+def download_indices_csv(dates, path, fname, cols, index_col="DATE"):
+	df = pd.DataFrame(index=dates)
+	df = pd.read_csv(
+			os.path.join(path, fname),
+			index_col=index_col,
+			parse_dates=True,
+			usecols=cols,
+			na_values=['nan'],
+			engine='python'
+		)
+	df = df.applymap(lambda x: np.nan if (x == '.') else x) # Set . as NaN
+	df = df.applymap(lambda x: float(x)) # convert strings to floats
+	df = df.bfill()
+	return df	
+
+def input_distance_from_upper_and_lower_bollinger_band(df):
+	# number of std deviations away from rolling mean
+	upper_band, lower_band = util.bollinger_bands(df)
+	distance_from_upper = upper_band - df
+	distance_from_lower = lower_band - df
+
+	distance_from_upper = distance_from_upper.rename(columns={'SPY': 'Distance From Upper'})
+	distance_from_lower = distance_from_lower.rename(columns={'SPY': 'Distance From Lower'})
+
+	return distance_from_upper, distance_from_lower
 	
 def test_results(weights):
-	start_date = '2013-01-02'
-	end_date = '2016-01-01'
+	print("Testing with weights...\n")
+	start_date = '2014-01-02'
+	end_date = '2016-08-31'
 	dates = pd.date_range(start_date, end_date)
 	spy = util.get_data(['SPY'], dates)
 	normed_spy = util.normalize_data(spy)
-	percent_correct = 0.0
-	for date, row in normed_spy.iterrows():
-		print(date, row)
+	expected = get_expected(dates)
+	correct_count = 0
+	test_inputs = create_inputs(dates, training=False)
+	# Test the output
+	for date, row in test_inputs.iterrows():
+		if(expected.ix[date][0] == output(date, test_inputs, weights)):
+			correct_count += 1
+
+	print("Correct count: {}, Total: {}, Percent Correct: {}".format(correct_count, str(test_inputs.shape[0]), str((correct_count/test_inputs.shape[0])*100) ))
+		#rolling_mean_over_std = rolling_over_std.ix[date][0]
 	
-	pass
+
+def create_inputs(dates, training=True):
+	inputs = pd.DataFrame(index=dates)
+	spy = util.get_data(['SPY'], dates)
+	normed_spy = util.normalize_data(spy) # SPY Normalized
+	inputs = inputs.join(spy)
+
+	#Set the inputs
+	input_distance_from_upper, input_distance_from_lower = input_distance_from_upper_and_lower_bollinger_band(normed_spy)
+
+	dollar_over_euro = download_indices_csv(dates, "data/indices", "DEXUSEU.csv", ["DATE", "DEXUSEU"]) # dollar / euro
+	ten_year_treasury_bond = download_indices_csv(dates, "data/indices", "DGS10.csv", ["DATE", "DGS10"])
+	boa_high_yield_options = download_indices_csv(dates, "data/indices", "BAMLH0A0HYM2.csv", ["DATE", "BAMLH0A0HYM2"])
+	inputs = inputs.join(input_distance_from_upper)
+	inputs = inputs.join(input_distance_from_lower)
+	inputs = inputs.join(dollar_over_euro)
+	inputs = inputs.join(ten_year_treasury_bond)
+	inputs = inputs.join(boa_high_yield_options)
+
+	# Join inputs together
+	inputs = inputs.dropna(subset=["SPY"])
+	inputs = inputs.dropna(subset=["Distance From Upper"])
+	inputs = inputs.dropna(subset=["Distance From Lower"])
+	inputs = inputs.dropna(subset=["DEXUSEU"])
+	inputs = inputs.dropna(subset=["DGS10"])
+	inputs = inputs.dropna(subset=["BAMLH0A0HYM2"])
+	inputs = inputs.ix[:,1:]
+	
+	if training:
+		inputs.shift(1)
+		# input_distance_from_upper.shift(1)
+		# input_distance_from_lower.shift(1)
+		# dollar_over_euro.shift(1)
+		# ten_year_treasury_bond.shift(1)
+		# boa_high_yield_options.shift(1)
+
+
+	return inputs
+
 
 def test_run():
 	start_date = '1993-08-31'
-	end_date = 	'2013-01-01'
+	end_date = 	'2014-01-01'
 	dates = pd.date_range(start_date, end_date)
-	num_training_inputs = 1
 	
 	expected = get_expected(dates) # From SPY
-	
-	training_inputs = pd.DataFrame(index=dates)
-	spy = util.get_data(['SPY'], dates)
-	normed_spy = util.normalize_data(spy)
-	training_inputs = training_inputs.join(spy)
-	# Create random training_inputs
-	
-	rolling_over_std = get_rolling_over_std(normed_spy)
-	
-	for x in range (num_training_inputs):
-		tmp = pd.DataFrame(data=np.random.rand(len(dates)), index=dates)
-		tmp = tmp.rename(columns={0: x})
-		training_inputs = training_inputs.join(tmp)
-	training_inputs = training_inputs.join(rolling_over_std)
-	training_inputs = training_inputs.dropna(subset=["SPY"])
-	training_inputs = training_inputs.dropna(subset=["Num STDS"])
-	training_inputs = training_inputs.ix[:,1:]
-	
-	print(training_inputs)
+	training_inputs = create_inputs(dates)
+
 	weights = create_weights(training_inputs) # start all weights at 0
 	
 	train(training_inputs, weights, expected)
-	
+	#weights = pd.Series([-0.000609, 0.001257])
+	print("Weights: \n", weights, "\n")
+
 	test_results(weights)
-	print(weights)
 
 
 if __name__ == "__main__":
